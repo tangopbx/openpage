@@ -1,0 +1,21 @@
+<module>
+	<rawname>openPage</rawname>
+	<repo>https://github.com/FreePBX/openPage</repo>
+	<name>Open Page</name>
+	<version>17.0.1</version>
+	<category>Admin</category>
+	<Publisher>James Finstrom</Publisher>
+	<licence>GPLv3</licence>
+	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<description>This modile provides advanced paging for FreePBX</description>
+	<changelog>
+		*17.0.1* Initial Dev Release
+	</changelog>
+	<menuitems>
+		<openpage>Advanced Paging</openpage>
+	</menuitems>
+	<depends>
+		<version>17</version>
+	</depends>
+	<supported>17.0</supported>
+</module>
