@@ -8,8 +8,7 @@ The goal of this project is to provide advanced paging features for FreePBX. The
 - [ ] Scheduled paging ([#4][i4])
 - [ ] Prepend Recording to page ([#3][i3])
 - [ ] Valet style paging ([#2][i2])
-- [ ] Outbound (Emergency) notification ([#1][i1])
-
+- [ ] Multicast paging ([#1][i1])
 ## Wishlist
 
 - [ ] API Integration for external triggers ([#5][i5])

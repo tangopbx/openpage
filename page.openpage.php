@@ -1,3 +1,4 @@
 <?php
 
-echo FreePBX::Openpage()->showPage();
+$op = FreePBX::Openpage();
+echo $op->showPage();
