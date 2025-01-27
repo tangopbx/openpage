@@ -2,22 +2,66 @@
 	<rawname>openpage</rawname>
 	<repo>https://github.com/FreePBX/openPage</repo>
 	<name>Open Page</name>
-	<version>17.0.1</version>
+	<version>17.0.5</version>
 	<category>Admin</category>
-	<publisher>James Finstrom</publisher>
-	<license>GPLv3</license>
-	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<publisher>TangoPBX LLC</publisher>
+	<license>AGPL-3.0</license>
+	<licenselink>http://www.gnu.org/licenses/AGPL-3.0.txt</licenselink>
 	<description>This modile provides advanced paging for FreePBX</description>
 	<changelog>
 		*17.0.1* Initial Dev Release
+		*17.0.2* Minor Fixes Beta Release
+		*17.0.3* Add event based overrides, fix prepend recording
+		*17.0.4* Custom soundfiles, Event headers
+		*17.0.5* Minor Fixes and Cleanup Beta 2
 	</changelog>
-	<menuitems>
-		<openpage>Advanced Paging</openpage>
-	</menuitems>
+	<hooks>
+		<paging class="Paging" namespace="FreePBX\modules">
+			<method callingMethod="hookForm" class="Openpage" namespace="FreePBX\modules">pagingHookForm</method>
+		</paging>
+	</hooks>
+	<database>
+		<table name="openpage_schedules">
+			<field name="id" type="integer" primarykey="true"/>
+			<field name="enable_scheduler" type="boolean" default="1"/>
+			<field name="schedule_start_date" type="date"/>
+			<field name="schedule_end_date" type="date"/>
+			<field name="time_zone" type="string"/>
+		</table>
+		<table name="openpage_events">
+			<field name="id" type="integer" primarykey="true" autoincrement="true"/>
+			<field name="schedule_id" type="integer"/>
+			<field name="time" type="time"/>
+			<field name="comment" type="string" length="255"/>
+			<field name="override_announcement" type="string" length="255"/>
+			<key name="schedule_id" type="index">
+				<column name="schedule_id"/>
+			</key>
+		</table>
+		<table name="openpage_event_days">
+			<field name="id" type="integer" primarykey="true" autoincrement="true"/>
+			<field name="event_id" type="integer"/>
+			<field name="day_of_week" type="string" length="0"/>
+			<key name="event_id" type="index">
+				<column name="event_id"/>
+			</key>
+		</table>
+		<table name="openpage_exclusion_dates">
+			<field name="id" type="integer" primarykey="true" autoincrement="true"/>
+			<field name="schedule_id" type="integer"/>
+			<field name="exclusion_date" type="date"/>
+			<field name="comment" type="string" length="255"/>
+			<key name="schedule_id" type="index">
+				<column name="schedule_id"/>
+			</key>
+		</table>
+	</database>
 	<supported>
 		<version>17.0</version>
 	</supported>
 	<depends>
-		<version>17.0</version>
+		<module>paging</module>
+		<module>recordings</module>
+		<version>17.0.1</version>
 	</depends>
 </module>

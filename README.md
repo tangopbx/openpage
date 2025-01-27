@@ -5,13 +5,14 @@ The goal of this project is to provide advanced paging features for FreePBX. The
 
 ## Features
 
-- [ ] Scheduled paging ([#4][i4])
-- [ ] Prepend Recording to page ([#3][i3])
-- [ ] Valet style paging ([#2][i2])
-- [ ] Multicast paging ([#1][i1])
+- [X] Scheduled paging ([#4][i4])
+- [X] Prepend Recording to page ([#3][i3])
+- [X] Valet style paging ([#2][i2])
+- [X] Multicast paging ([#1][i1])
 ## Wishlist
 
 - [ ] API Integration for external triggers ([#5][i5])
+- [X] Announcement override per event
 
 [i4]: https://github.com/jfinstrom/openpage/issues/4
 [i3]: https://github.com/jfinstrom/openpage/issues/3
