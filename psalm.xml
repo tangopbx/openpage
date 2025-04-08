@@ -1,22 +1,30 @@
 <?xml version="1.0"?>
 <psalm
-	errorLevel="8"
-	resolveFromConfigFile="true"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns="https://getpsalm.org/schema/config"
-	xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
-	findUnusedBaselineEntry="true"
-	findUnusedCode="true"
+    errorLevel="2"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    findUnusedBaselineEntry="true"
+    findUnusedCode="true"
 >
-	<projectFiles>
-		<file name="Openpage.class.php" />
-		<directory name="views" />
-		<ignoreFiles>
-			<directory name="vendor" />
-		</ignoreFiles>
-	</projectFiles>
-	<stubs>
-		<file name="BMO.stubs.php" />
-		<file name=".intelephense.stubs.php" />
-	</stubs>
+    <projectFiles>
+        <file name="Backup.php" />
+        <file name="Openpage.class.php" />
+        <file name="Job.php" />
+        <file name="Restore.php" />
+        <file name="BMO.stubs.php" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+    <issueHandlers>
+        <UndefinedClass>
+            <errorLevel type="suppress">
+                <referencedClass name="FreePBX" />
+                <referencedClass name="FreePBX_Helpers" />
+                <referencedClass name="BMO" />
+            </errorLevel>
+        </UndefinedClass>
+    </issueHandlers>
 </psalm>

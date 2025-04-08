@@ -31,10 +31,8 @@ namespace FreePBX\modules;
 
 use FreePBX_Helpers;
 use BMO;
-use Ramsey\Uuid\Uuid;
 use Exception;
 use DateTime;
-use DateInterval;
 use DateTimeZone;
 use PDO;
 
@@ -301,13 +299,15 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * Retrieves the scheduler configuration for a specified page group.
 	 *
 	 * @param string $id The ID of the page group to retrieve the scheduler configuration for.
-	 * @return mixed The scheduler configuration for the page group, or null if not set.
+	 * @return array The scheduler configuration for the page group, or null if not set.
 	*/
-	public function getScheduler($id){
+	public function getScheduler($id): array {
 		$sql = 'SELECT * from openpage_schedules WHERE id = ?';
 		$stmt = $this->Database->prepare($sql);
 		$stmt->execute([$id]);
-		return $stmt->fetch(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+		return $row ?: [];
 	}
 
 	/**
@@ -316,11 +316,11 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $id The ID of the page group to retrieve settings for.
 	 * @return array The settings for the page group.
 	 */
-	public function getPageGroupSettings($id){
-		return $this->getConfig($id, 'pagegroupsettings');
+	public function getPageGroupSettings($id): array {
+		return $this->getConfig($id, 'pagegroupsettings') ?? [];
 	}
 
-		/**
+	/**
 	 * Gets the page group config settings.
 	 * 
 	 * @param string $pagegroup
@@ -337,7 +337,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 			$defaults['time_zone'] = $scheduler['time_zone'];
 		}
 		$settings = $this->getPageGroupSettings($pagegroup);
-		$events = $this->getPageGroupEvents($pagegroup, $defaults['time_zone']);
+		$events = $this->getPageGroupEvents($pagegroup);
 		$exclusion_dates = $this->getPageGroupExclusionDates($pagegroup);
 
 		if( !empty($events) ){
@@ -363,7 +363,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $id The page group ID.
 	 * @return array The events associated with the page group.
 	 */
-	public function getPageGroupEvents($id, $timezone = null) {
+	public function getPageGroupEvents($id) {
 		$sql = "SELECT e.id, e.time, e.comment, e.override_announcement, d.day_of_week 
 				FROM openpage_events e
 				JOIN openpage_event_days d ON e.id = d.event_id
@@ -457,7 +457,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param array<string, mixed> $data An associative array of settings to update.
 	 *  Must contain the keys 'multicast' and 'announcement'.
 	*/
-	public function updatePageGroupSettings($id, $data ){
+	public function updatePageGroupSettings($id, $data ): void {
 		$insert = [
 			'multicast' => $data['multicast'],
 			'announcement' => $data['announcement'],
@@ -473,7 +473,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $id The ID of the page group for which the settings should be deleted.
 	 * @return void
 	*/
-	public function deletePageGroupSettings($id){
+	public function deletePageGroupSettings($id): void {
 		$this->setConfig($id, false, 'pagegroupsettings');
 	}
 	
@@ -485,7 +485,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $end The end date for the scheduler in 'YYYY-MM-DD' format.
 	 * @return void
 	 */
-	public function enableScheduler($id, $start, $end, $timezone) {
+	public function enableScheduler($id, $start, $end, $timezone): void {
 		$sql = "INSERT INTO openpage_schedules (id, enable_scheduler, schedule_start_date, schedule_end_date, time_zone)
 				VALUES (?, 1, ?, ?, ?) 
 				ON DUPLICATE KEY UPDATE enable_scheduler = 1, schedule_start_date = ?, schedule_end_date = ?, time_zone = ?";
@@ -499,7 +499,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $id The ID of the page group for which the scheduler should be disabled.
 	 * @return void
 	 */
-	public function disableScheduler($id) {
+	public function disableScheduler($id): void {
 		$sql = "UPDATE openpage_schedules SET enable_scheduler = 0 WHERE id = ?";
 		$stmt = $this->Database->prepare($sql);
 		$stmt->execute([$id]);
@@ -512,7 +512,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param array $events An array of event data to associate with the page group.
 	 * @return void
 	 */
-	public function updatePageGroupEvents($id, $events) {
+	public function updatePageGroupEvents($id, $events): void {
 		// Remove old events
 		$deleteEvents = "DELETE FROM openpage_events WHERE schedule_id = ?";
 		$stmt = $this->Database->prepare($deleteEvents);
@@ -539,7 +539,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param array $dates An array of dates in the format 'YYYY-MM-DD' to exclude, or an empty array to remove all exclusion dates.
 	 * @return void
 	 */
-	public function updatePageGroupExclusionDates($id, $dates) {
+	public function updatePageGroupExclusionDates($id, $dates): void {
 		// Remove old exclusion dates
 		$deleteExclusions = "DELETE FROM openpage_exclusion_dates WHERE schedule_id = ?";
 		$stmt = $this->Database->prepare($deleteExclusions);
@@ -562,7 +562,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $id The ID of the page group to delete.
 	 */
 
-	public function deletePageGroup($id){
+	public function deletePageGroup($id): void {
 		$this->setConfig($id, false, 'pagegroups');
 		$this->setConfig($id, false, 'pagegroups_events');
 		$this->setConfig($id, false, 'pagegroups_exclusion_dates');
@@ -574,7 +574,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 
 	/** HOOKS */
 
-	public function pagingHookForm(){
+	public function pagingHookForm(): array {
 		$extension = isset($_REQUEST['extdisplay']) ? $_REQUEST['extdisplay'] : 'new';
 		$openpageVars = $this->getPageGroup($extension);
 		$openpageVars['announcementOptions'] = $this->getAnnouncementOpts($openpageVars['openpage_announcement']);
@@ -600,9 +600,9 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * spool directory. It is intended to be called from cron or another automated
 	 * process.
 	 *
-	 * @return boolean True if all scheduled pages were successfully processed.
+	 * @return array An array with a 'status' key indicating the success or failure of the operation	.
 	*/
-	public function generateEvents($clearcache = false) {
+	public function generateEvents($clearcache = false): array {
 		if ($this->FreePBX->Cache->contains('openpage_events') && $clearcache == false) {
 			return ['status' => 'cached'];
 		}
@@ -634,7 +634,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @param string $pagegroup The ID of the page group whose call files should be removed.
 	 * @return bool True if the operation completes successfully, even if no files are found.
 	 */
-	public function removeCallFilesByPageGroup($pagegroup){
+	public function removeCallFilesByPageGroup($pagegroup): bool {
 		$spooldir = $this->FreePBX->Config->get('ASTSPOOLDIR') . '/outgoing/';	
 		$pagegroup = (string)$pagegroup;
 		$pattern = $spooldir . 'openpage_' . $pagegroup . '_[0-1][0-9]*.call';
@@ -651,7 +651,24 @@ class Openpage extends FreePBX_Helpers implements BMO
 		return true;
 	}
 
-	public function generateCallFile($event) {
+	/**
+	 * Generates a single call file for a scheduled page event.
+	 *
+	 * This method takes an event array with keys 'schedule_id', 'unixtime', 'time', 'time_zone',
+	 * and 'day_of_week' and generates a call file in the Asterisk spool directory.
+	 * The call file is named openpage_{pagegroup}_{unixtime}.call and contains the
+	 * Channel, Context, Extension, and Archive settings for the event. The file is
+	 * created in the tmp directory and then moved to the outgoing directory with
+	 * the correct timestamp.
+	 *
+	 * The method also handles converting the event time to UTC and adjusting the
+	 * event date if the event is tomorrow within 24 hours.
+	 *
+	 * @param array $event An array with keys 'schedule_id', 'unixtime', 'time',
+	 *                      'time_zone', and 'day_of_week' describing the event.
+	 * @return bool True if the call file is created successfully.
+	 */
+	public function generateCallFile($event): bool {
 		$spooldir = $this->FreePBX->Config->get('ASTSPOOLDIR');
 		$tmp = $spooldir . '/tmp/';
 		$outgoing = $spooldir . '/outgoing/';
@@ -705,6 +722,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 
 		return true;
 	}
+
 	/**
 	 * Returns an array of events that are scheduled to occur in the next specified number of minutes.
 	 *
@@ -722,7 +740,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * If you are smarter than me, please let fix this and earn a gold star and internet points.
 	 * If you fail add a tally of failed attempts to this comment.
 	*/
-	public function getUpcomingEventsInNextXMinutes($minutes = 1440) {
+	public function getUpcomingEventsInNextXMinutes($minutes = 1440): array {
 		try {
 			$allEventsQuery = "
 				SELECT e.*, s.time_zone, d.day_of_week
@@ -797,7 +815,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @return array An associative array with the following keys:
 	 *               'page_group', 'force_page', 'duplex', 'announcement', 'volume'
 	 */
-	public function getPagingPageGroups(){
+	public function getPagingPageGroups(): array {
 		if (!$this->FreePBX->Modules->checkStatus("paging")) {
 			return [];
 		}
