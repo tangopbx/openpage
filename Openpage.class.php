@@ -317,12 +317,15 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @return array The settings for the page group.
 	 */
 	public function getPageGroupSettings($id): array {
-		return $this->getConfig($id, 'pagegroupsettings') ?? [];
+		//getConfig has a return signature of bool|string|array|StdObject
+		$pagegroupsettings = $this->getConfig($id, 'pagegroupsettings');
+		//So since, we say we are returning an array, let's ensure that's true
+		return is_array($pagegroupsettings) ? $pagegroupsettings : [];
 	}
 
 	/**
 	 * Gets the page group config settings.
-	 * 
+	 *
 	 * @param string $pagegroup
 	 * @return array
 	 */
