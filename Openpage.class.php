@@ -1,28 +1,28 @@
 <?php
 /**
  * Openpage Module
- * 
+ *
  * @package   Openpage
  * @author    TangoPBX LLC
  * @license   GNU Affero General Public License v3.0 (AGPL-3.0)
  * @link      https://www.tangopbx.org
  * @since     2025-03-17
- * 
+ *
  * Description:
  * This file is part of the Openpage module, developed and maintained by TangoPBX LLC.
  * It provides core functionality for managing Openpage features within the TangoPBX system.
- * 
+ *
  * License:
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
@@ -41,7 +41,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	const GENERATE_INTERVAL = 1440; // minutes
 	protected $FreePBX;
 	protected $Database;
-	
+
 
 	/** BMO Methods */
 	public function __construct($FreePBX)
@@ -168,7 +168,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$ext->add($context, '_X.', '', new \ext_setvar('RECORDED_FILE',''));
 		$ext->add($context, '_X.', 'hangup', new \ext_hangup());
 		$ext->addInclude('from-internal-additional', $context);
-		
+
 		$context = 'ext-valet-hangup';
 		$ext->add($context, '_X.', 'announcement', new \ext_setvar('ANNOUNCEMENT', '${RECORDED_FILE}'));
 		$ext->add($context, '_X.', '', new \ext_noop('Event ID: ${EVENTID}'));
@@ -245,7 +245,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 
 			if(!empty($multicast)){
 				$ext->splice($apppagegroups, $pagegroup['page_group'],'', new \ext_set('MCAST', implode('-', $multicast)), 'mcastpage');
-			} 
+			}
 
 			if(!empty($announcement)){
 				$astman->database_put("OPENPAGE",$pagegroup['page_group']."/prepend", $announcement);
@@ -260,7 +260,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 			}
 			$pgGrpupEvents = $this->getPageGroupEvents($pagegroup['page_group']);
 			foreach($pgGrpupEvents as $event){
-				if(empty($event['override_announcement'])){	
+				if(empty($event['override_announcement'])){
 					$astman->database_del('OPENPAGE', $event['id'] . '/annoverride' );
 					continue;
 				}
@@ -317,12 +317,15 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @return array The settings for the page group.
 	 */
 	public function getPageGroupSettings($id): array {
-		return $this->getConfig($id, 'pagegroupsettings') ?? [];
+		//getConfig has a return signature of bool|string|array|StdObject
+		$pagegroupsettings = $this->getConfig($id, 'pagegroupsettings');
+		//So since, we say we are returning an array, let's ensure that's true
+		return is_array($pagegroupsettings) ? $pagegroupsettings : [];
 	}
 
 	/**
 	 * Gets the page group config settings.
-	 * 
+	 *
 	 * @param string $pagegroup
 	 * @return array
 	 */
@@ -353,7 +356,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 			$defaults['openpage_multicast'] = $settings['multicast'];
 			$defaults['openpage_valet'] = $settings['openpage_valet'];
 		}
-	
+
 		return $defaults;
 	}
 
@@ -364,7 +367,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @return array The events associated with the page group.
 	 */
 	public function getPageGroupEvents($id) {
-		$sql = "SELECT e.id, e.time, e.comment, e.override_announcement, d.day_of_week 
+		$sql = "SELECT e.id, e.time, e.comment, e.override_announcement, d.day_of_week
 				FROM openpage_events e
 				JOIN openpage_event_days d ON e.id = d.event_id
 				WHERE e.schedule_id = ?";
@@ -476,7 +479,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	public function deletePageGroupSettings($id): void {
 		$this->setConfig($id, false, 'pagegroupsettings');
 	}
-	
+
 	/**
 	 * Enables the scheduler for a specified page group.
 	 *
@@ -487,7 +490,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 */
 	public function enableScheduler($id, $start, $end, $timezone): void {
 		$sql = "INSERT INTO openpage_schedules (id, enable_scheduler, schedule_start_date, schedule_end_date, time_zone)
-				VALUES (?, 1, ?, ?, ?) 
+				VALUES (?, 1, ?, ?, ?)
 				ON DUPLICATE KEY UPDATE enable_scheduler = 1, schedule_start_date = ?, schedule_end_date = ?, time_zone = ?";
 		$stmt = $this->Database->prepare($sql);
 		$stmt->execute([$id, $start, $end, $timezone, $start, $end, $timezone]);
@@ -503,7 +506,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$sql = "UPDATE openpage_schedules SET enable_scheduler = 0 WHERE id = ?";
 		$stmt = $this->Database->prepare($sql);
 		$stmt->execute([$id]);
-	}	
+	}
 
 	/**
 	 * Updates the events for a specified page group.
@@ -580,7 +583,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$openpageVars['announcementOptions'] = $this->getAnnouncementOpts($openpageVars['openpage_announcement']);
 		$openpageVars['announceoverrideopts'] = $this->getAnnouncementOpts('', true);
 
-		return [ 
+		return [
 			[
 			'title' => _('Advanced Paging'),
 			'rawname' => 'openpage',
@@ -635,7 +638,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @return bool True if the operation completes successfully, even if no files are found.
 	 */
 	public function removeCallFilesByPageGroup($pagegroup): bool {
-		$spooldir = $this->FreePBX->Config->get('ASTSPOOLDIR') . '/outgoing/';	
+		$spooldir = $this->FreePBX->Config->get('ASTSPOOLDIR') . '/outgoing/';
 		$pagegroup = (string)$pagegroup;
 		$pattern = $spooldir . 'openpage_' . $pagegroup . '_[0-1][0-9]*.call';
 		$files = glob($pattern);
@@ -733,7 +736,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 *                     the default is 1440 minutes (24 hours).
 	 *
 	 * @return array An array of events, or an empty array if no events are found.
-	 * 
+	 *
 	 * This may not be the most elegant solution, but I have found there may be discrepancies in the timezones
 	 * between mysql, php and the system. We want to allow the user to set the timezone and that may not align with anything.
 	 * So we stack some queries to get all the events and then filter them in PHP which I dislike but it works.
@@ -761,7 +764,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 			$allEvents = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
 			$filteredEvents = [];
-			
+
 			foreach ($allEvents as $event) {
 				$timeZone = $event['time_zone'];
 				$eventTime = $event['time'];
@@ -824,6 +827,6 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$stmt = $this->Database->prepare($sql);
 		$stmt->execute();
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
-	}	
-	/** END Utilities */	
+	}
+	/** END Utilities */
 }
