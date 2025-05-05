@@ -9,6 +9,7 @@
 	<licenselink>http://www.gnu.org/licenses/AGPL-3.0.txt</licenselink>
 	<description>This modile provides advanced paging for FreePBX</description>
 	<changelog>
+		*17.0.8* Fixes #7 Type error
 		*17.0.7* Minor Fixes to variables and cleanup
 		*17.0.6* Git rid of unused Composer libs
 		*17.0.1* Initial Dev Release
