@@ -1,5 +1,22 @@
 {
     "require-dev": {
         "vimeo/psalm": "^6.10"
-    }
+    },
+    "excludes": [
+        ".git",
+        ".github",
+        "vendor",
+        "composer.json",
+        "composer.lock",
+        "psalm.xml",
+        ".prettierrc",
+        ".prettierignore",
+        "event.json",
+        "package-lock.json",
+        "package.json",
+        "BMO.stubs.php",
+        ".intelephense.stubs.php",
+        "exclude.txt",
+        "module.sig"
+    ]
 }
