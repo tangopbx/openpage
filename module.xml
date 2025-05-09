@@ -2,13 +2,14 @@
 	<rawname>openpage</rawname>
 	<repo>standard</repo>
 	<name>Open Page</name>
-	<version>17.0.8</version>
+	<version>17.0.9</version>
 	<category>Admin</category>
 	<publisher>TangoPBX LLC</publisher>
 	<license>AGPL-3.0</license>
 	<licenselink>http://www.gnu.org/licenses/AGPL-3.0.txt</licenselink>
 	<description>This module provides advanced paging for FreePBX</description>
 	<changelog>
+		*17.0.9* Fixes #10 adds pagegroup defaults. 
 		*17.0.8* Fixes #7 which ensures getPageGroupSettings returns an array
 		*17.0.7* Minor Fixes to variables and cleanup
 		*17.0.6* Git rid of unused Composer libs

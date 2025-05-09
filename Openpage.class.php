@@ -310,6 +310,14 @@ class Openpage extends FreePBX_Helpers implements BMO
 		return $row ?: [];
 	}
 
+	public function getPageGroupSettingDefaults(): array {
+		return [
+			'multicast' => [],
+			'announcement' => '',
+			'openpage_valet' => 'live',
+		];
+	}
+
 	/**
 	 * Returns the settings for a page group.
 	 *
@@ -317,10 +325,16 @@ class Openpage extends FreePBX_Helpers implements BMO
 	 * @return array The settings for the page group.
 	 */
 	public function getPageGroupSettings($id): array {
+		$defaults = $this->getPageGroupSettingDefaults();
 		//getConfig has a return signature of bool|string|array|StdObject
 		$pagegroupsettings = $this->getConfig($id, 'pagegroupsettings');
-		//So since, we say we are returning an array, let's ensure that's true
-		return is_array($pagegroupsettings) ? $pagegroupsettings : [];
+		if(is_array($pagegroupsettings)){
+			foreach($pagegroupsettings as $key => $value){
+				$defaults[$key] = $value;
+			}
+		}
+
+		return $defaults;
 	}
 
 	/**
