@@ -190,8 +190,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$ext->add($context, '_X.', 'busy-hang', new \ext_goto('app-pagegroups,h,1'));
 		$ext->add($context, '_X.', '', new \ext_return(''));
 		$ext->add($context, '_X.', 'cancel-page', new \ext_noop('Valet page cancelled (hangup during recording or not accepted)'));
-		$ext->add($context, '_X.', '', new \ext_execif('$["${STAT(f,${RECORDED_FILE})}" = "1"]', 'System', 'rm -f ${RECORDED_FILE}'));
-		$ext->add($context, '_X.', '', new \ext_hangup());
+		$ext->add($context, '_X.', '', new \ext_execif('$["${STAT(f,${RECORDED_FILE})}" = "1"]', 'System', 'rm -f -- "${RECORDED_FILE}"'));
 		$ext->add($context, '_X.', '', new \ext_return(''));
 		$ext->add($context, '_X.', 'setprependevent', new \ext_noop('Setting prepend event'));
 		$ext->add($context, '_X.', '', new \ext_setvar('ANNOUNCEOVERRIDE', '${DB(OPENPAGE/${EVENTID}/annoverride)}'));
@@ -214,7 +213,8 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$ext->add($context, 's', '', new \ext_playback('en/openpage-your-recording-is')); // "Your page is"
 		$ext->add($context, 's', '', new \ext_playback('${RECORDED_FILE}')); // Playback to ensure full uninterrupted review
 		$ext->add($context, 's', '', new \ext_read('CHOICE', 'en/openpage-to-accept', '1', '', '', '5')); // include prompt in Read for reliable DTMF capture (barge-in)
-		$ext->add($context, 's', '', new \ext_gotoif('$["${CHOICE}" = "2"]', 're_record', 'accept'));
+		$ext->add($context, 's', '', new \ext_gotoif('$["${CHOICE}" = "2"]', 're_record'));
+		$ext->add($context, 's', '', new \ext_gotoif('$["${CHOICE}" = "1" | "${CHOICE}" = ""]', 'accept', 're_record'));
 		$ext->add($context, 's', 're_record', new \ext_setvar('RECORDED_FILE', '${RECORDED_FILE}')); // re-assert for internal goto (some scope/execution edge cases)
 		$ext->add($context, 's', '', new \ext_goto('start'));
 		$ext->add($context, 's', 'accept', new \ext_setvar('VALET_ACCEPTED', '1'));
