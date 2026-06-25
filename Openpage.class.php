@@ -170,6 +170,7 @@ class Openpage extends FreePBX_Helpers implements BMO
 
 		$context = 'ext-valet-hangup';
 		$ext->add($context, '_X.', 'announcement', new \ext_setvar('ANNOUNCEMENT', '${RECORDED_FILE}'));
+		$ext->add($context, '_X.', '', new \ext_gotoif('$["${LEN(${EVENTID})}" = "0" & "${VALET_ACCEPTED}" != "1"]', 'cancel-page'));
 		$ext->add($context, '_X.', '', new \ext_noop('Event ID: ${EVENTID}'));
 		$ext->add($context, '_X.', '', new \ext_noop('Exten: ${EXTEN}'));
 		$ext->add($context, '_X.', '', new \ext_gotoif('$[${LEN(${EVENTID})}!=0]', 'setprependevent', 'setprependexten'));
@@ -180,12 +181,17 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$ext->add($context, '_X.', '', new \ext_setvar('CONFBRIDGE(user,admin)', 'yes'));
 		$ext->add($context, '_X.', '', new \ext_setvar('CONFBRIDGE(user,marked)', 'yes'));
 		$ext->add($context, '_X.', 'openpage-page', new \ext_meetme('${PAGE_CONF}',',','admin_menu'));
+		$ext->add($context, '_X.', '', new \ext_execif('$["${VALET_ACCEPTED}" = "1" & "${STAT(f,${RECORDED_FILE})}" = "1"]', 'System', 'rm -f ${RECORDED_FILE}'));
 		$ext->add($context, '_X.', '', new \ext_hangup());
-		$ext->add($context, '_X.', '', new \ext_goto('app-pagegroup,h,1'));
+		$ext->add($context, '_X.', '', new \ext_goto('app-pagegroups,h,1'));
 		$ext->add($context, '_X.', 'skiprecord', new \ext_setvar('RECORDED_FILE', '${NEWRECORDING}'));
 		$ext->add($context, '_X.', '', new \ext_goto('announcement'));
 		$ext->add($context, '_X.', '', new \ext_setvar('PAGE${PAGEGROUP}BUSY${EXTEN}', ''));
 		$ext->add($context, '_X.', 'busy-hang', new \ext_goto('app-pagegroups,h,1'));
+		$ext->add($context, '_X.', '', new \ext_return(''));
+		$ext->add($context, '_X.', 'cancel-page', new \ext_noop('Valet page cancelled (hangup during recording or not accepted)'));
+		$ext->add($context, '_X.', '', new \ext_execif('$["${STAT(f,${RECORDED_FILE})}" = "1"]', 'System', 'rm -f ${RECORDED_FILE}'));
+		$ext->add($context, '_X.', '', new \ext_hangup());
 		$ext->add($context, '_X.', '', new \ext_return(''));
 		$ext->add($context, '_X.', 'setprependevent', new \ext_noop('Setting prepend event'));
 		$ext->add($context, '_X.', '', new \ext_setvar('ANNOUNCEOVERRIDE', '${DB(OPENPAGE/${EVENTID}/annoverride)}'));
@@ -202,17 +208,19 @@ class Openpage extends FreePBX_Helpers implements BMO
 		$ext->add($context, '_X.', '', new \ext_goto('pagegroup'));
 
 		$context = 'sub-valet-record';
-		$ext->add($context, 's', '', new \ext_answer());
-		$ext->add($context, 's', '', new \ext_background('en/openpage-record-your-page')); // "Record your page after the tone. Press # when finished"
+		$ext->add($context, 's', 'start', new \ext_answer());
+		$ext->add($context, 's', '', new \ext_playback('en/openpage-record-your-page')); // "Record your page after the tone. Press # when finished"
 		$ext->add($context, 's', '', new \ext_record('${RECORDED_FILE}'));
-		$ext->add($context, 's', '', new \ext_background('en/openpage-your-recording-is')); // "Your page is"
-		$ext->add($context, 's', '', new \ext_playback('${RECORDED_FILE}')); // Keep as Playback to ensure uninterrupted playback
-		$ext->add($context, 's', '', new \ext_background('en/openpage-to-accept')); // "Press 1 to accept or 2 to re-record"
-		$ext->add($context, 's', '', new \ext_read('CHOICE', '', '1')); // Read one digit
-		$ext->add($context, 's', '', new \ext_gotoif('$["${CHOICE}" = "1"]', 'accept', 'check_rerecord'));
-		$ext->add($context, 's', 'check_rerecord', new \ext_gotoif('$["${CHOICE}" = "2"]', 're_record', 're_record')); // Default to re-record if not 1 or 2
-		$ext->add($context, 's', 're_record', new \ext_goto('s', '1'));
-		$ext->add($context, 's', 'accept', new \ext_return());
+		$ext->add($context, 's', '', new \ext_playback('en/openpage-your-recording-is')); // "Your page is"
+		$ext->add($context, 's', '', new \ext_playback('${RECORDED_FILE}')); // Playback to ensure full uninterrupted review
+		$ext->add($context, 's', '', new \ext_read('CHOICE', 'en/openpage-to-accept', '1', '', '', '5')); // include prompt in Read for reliable DTMF capture (barge-in)
+		$ext->add($context, 's', '', new \ext_gotoif('$["${CHOICE}" = "2"]', 're_record', 'accept'));
+		$ext->add($context, 's', 're_record', new \ext_setvar('RECORDED_FILE', '${RECORDED_FILE}')); // re-assert for internal goto (some scope/execution edge cases)
+		$ext->add($context, 's', '', new \ext_goto('start'));
+		$ext->add($context, 's', 'accept', new \ext_setvar('VALET_ACCEPTED', '1'));
+		$ext->add($context, 's', '', new \ext_return());
+		$ext->add($context, 'i', '', new \ext_goto('re_record'));
+		$ext->add($context, 't', '', new \ext_goto('accept'));
 		$ext->addInclude('from-internal-additional', $context);
 
 		$context = 'sub-valet-check';
